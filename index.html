@@ -457,7 +457,7 @@
     el.innerHTML = '<p class="hint">Recherche en cours…</p>';
 
     try {
-      const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(q)}&page_size=6&ordering=-rating`;
+      const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(q)}&page_size=6&search_exact=true&ordering=-rating`;
       const res = await fetch(url);
 
       if (!res.ok) {
