@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ma Bibliothèque</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0e0e10;
+      --surface: #18181c;
+      --surface2: #222228;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #f0ede8;
+      --muted: #888885;
+      --accent: #c8f060;
+      --accent-dim: rgba(200,240,96,0.12);
+      --red: #f06060;
+      --red-dim: rgba(240,96,96,0.12);
+      --blue: #60aff0;
+      --blue-dim: rgba(96,175,240,0.12);
+      --gold: #f0c060;
+      --gold-dim: rgba(240,192,96,0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* API key screen */
+    #api-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .api-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+    }
+    .api-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .api-card p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .api-card a { color: var(--accent); text-decoration: none; }
+
+    /* Layout */
+    #main-screen { display: none; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(14,14,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .search-wrap {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      max-width: 480px;
+    }
+    .search-wrap input {
+      flex: 1;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      height: 36px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-wrap input:focus { border-color: var(--border2); }
+    .search-wrap input::placeholder { color: var(--muted); }
+    .btn {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border2);
+      background: transparent;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn:hover { background: var(--surface2); }
+    .btn-accent {
+      background: var(--accent);
+      color: #0e0e10;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+    .btn-accent:hover { opacity: 0.85; background: var(--accent); }
+
+    .content { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+    /* Search results dropdown */
+    .search-results {
+      background: var(--surface);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 0.5px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .result-item:last-child { border-bottom: none; }
+    .result-item:hover { background: var(--surface2); }
+    .result-icon {
+      width: 44px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .result-info { flex: 1; min-width: 0; }
+    .result-name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .result-meta { font-size: 12px; color: var(--muted); }
+    .add-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 0.5px solid rgba(200,240,96,0.25);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+    .add-chip:hover { background: rgba(200,240,96,0.2); }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .stat {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .filter-btn {
+      font-size: 13px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border2);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { color: var(--text); border-color: var(--border2); }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #0e0e10;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Game grid */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+    }
+    .game-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .game-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .game-cover {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .game-cover::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(14,14,16,0.6) 100%);
+    }
+    .game-body { padding: 10px 12px 12px; }
+    .status-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .badge-liste { background: var(--surface2); color: var(--muted); }
+    .badge-joue { background: var(--gold-dim); color: var(--gold); }
+    .badge-complete { background: var(--accent-dim); color: var(--accent); }
+    .badge-abandonne { background: var(--red-dim); color: var(--red); }
+
+    .game-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .game-year { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .status-select {
+      width: 100%;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.12s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888885' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 24px;
+    }
+    .status-select:focus { border-color: var(--border2); }
+    .game-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .del-btn {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.12s;
+    }
+    .del-btn:hover { color: var(--red); }
+
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    .hint { font-size: 13px; color: var(--muted); text-align: center; padding: 1rem; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .game-card { animation: fadeIn 0.2s ease both; }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 0 1rem; gap: 8px; }
+      .logo { font-size: 15px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- API Key Screen -->
+<div id="api-screen">
+  <div class="api-card">
+    <h2>🎮 Ma Bibliothèque</h2>
+    <p>
+      Cette app utilise l'API RAWG pour rechercher les jeux et afficher leurs jaquettes.<br />
+      Crée un compte gratuit sur <a href="https://rawg.io/apidocs" target="_blank">rawg.io</a> pour obtenir ta clé (~500 000 requêtes/mois gratuites).
+    </p>
+    <input type="text" id="apiKeyInput" placeholder="Clé API RAWG…" style="width:100%;margin-bottom:10px;" />
+    <button class="btn btn-accent" onclick="saveApiKey()" style="width:100%;">Continuer</button>
+    <p style="margin-top:10px;font-size:12px;">La clé est stockée localement sur ton appareil uniquement.</p>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="main-screen">
+  <div class="topbar">
+    <div class="logo">BACKLOG</div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Chercher un jeu..." />
+      <button class="btn btn-accent" onclick="doSearch()">Rechercher</button>
+    </div>
+    <button class="btn" onclick="resetApiKey()" style="font-size:12px;color:var(--muted);">Clé API</button>
+  </div>
+
+  <div class="content">
+    <div id="searchResults"></div>
+    <div class="stats" id="statsRow"></div>
+    <div class="filters" id="filters"></div>
+    <div class="game-grid" id="gameGrid"></div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_GAMES = 'backlog_games_v1';
+  const STORAGE_KEY   = 'backlog_api_key';
+
+  let games        = [];
+  let activeFilter = 'Tous';
+  let apiKey       = '';
+
+  const statusLabels = {
+    liste:     'Dans la liste',
+    joue:      'En cours / Joué',
+    complete:  'Complété',
+    abandonne: 'Abandonné'
+  };
+
+  const statusEmojis = {
+    liste: '📋', joue: '🕹️', complete: '✅', abandonne: '❌'
+  };
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  function init() {
+    apiKey = localStorage.getItem(STORAGE_KEY) || '';
+    if (apiKey) {
+      showMain();
+    } else {
+      document.getElementById('api-screen').style.display = 'flex';
+    }
+    const saved = localStorage.getItem(STORAGE_GAMES);
+    if (saved) { try { games = JSON.parse(saved); } catch(e) { games = []; } }
+  }
+
+  function saveApiKey() {
+    const val = document.getElementById('apiKeyInput').value.trim();
+    if (!val) { alert('Entre ta clé API RAWG.'); return; }
+    apiKey = val;
+    localStorage.setItem(STORAGE_KEY, apiKey);
+    showMain();
+  }
+
+  function resetApiKey() {
+    if (!confirm('Changer la clé API ?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    apiKey = '';
+    document.getElementById('main-screen').style.display = 'none';
+    document.getElementById('api-screen').style.display  = 'flex';
+    document.getElementById('apiKeyInput').value = '';
+  }
+
+  function showMain() {
+    document.getElementById('api-screen').style.display  = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    render();
+  }
+
+  function saveGames() {
+    localStorage.setItem(STORAGE_GAMES, JSON.stringify(games));
+  }
+
+  // ── Search ────────────────────────────────────────────────────────────────
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.activeElement.id === 'searchInput') doSearch();
+  });
+
+  async function doSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+    const el = document.getElementById('searchResults');
+    el.innerHTML = '<p class="hint">Recherche en cours…</p>';
+
+    try {
+      const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(apiKey)}&search=${encodeURIComponent(q)}&page_size=6&ordering=-rating`;
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      renderSearchResults(data.results || []);
+
+    } catch (e) {
+      el.innerHTML = `<p class="hint" style="color:var(--red);">Erreur : ${esc(e.message)}</p>`;
+    }
+  }
+
+  function renderSearchResults(results) {
+    const el = document.getElementById('searchResults');
+    if (!results.length) {
+      el.innerHTML = '<p class="hint">Aucun résultat trouvé.</p>';
+      return;
+    }
+    el.className = 'search-results';
+    el.innerHTML = results.map((g, i) => {
+      const year      = g.released ? g.released.slice(0, 4) : '';
+      const platforms = (g.platforms || []).slice(0, 3).map(p => p.platform.name).join(', ');
+      const meta      = [year, platforms].filter(Boolean).join(' · ');
+      const coverHtml = g.background_image
+        ? `<img style="width:56px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;" src="${esc(g.background_image)}" loading="lazy" />`
+        : `<div class="result-icon">🎮</div>`;
+      return `
+        <div class="result-item" onclick="addGame(${i})">
+          ${coverHtml}
+          <div class="result-info">
+            <div class="result-name">${esc(g.name)}</div>
+            <div class="result-meta">${esc(meta)}${g.rating ? ` · ★ ${g.rating}` : ''}</div>
+          </div>
+          <span class="add-chip">+ Ajouter</span>
+        </div>`;
+    }).join('');
+    window._searchResults = results;
+  }
+
+  function addGame(i) {
+    const g = (window._searchResults || [])[i];
+    if (!g) return;
+    if (games.find(x => x.rawgId === g.id)) {
+      alert('Ce jeu est déjà dans ta bibliothèque !');
+      return;
+    }
+    const platforms = (g.platforms || []).slice(0, 3).map(p => p.platform.name);
+    const genres    = (g.genres    || []).slice(0, 2).map(x => x.name);
+    games.unshift({
+      id:        Date.now(),
+      rawgId:    g.id,
+      name:      g.name,
+      year:      g.released ? g.released.slice(0, 4) : null,
+      cover:     g.background_image || '',
+      rating:    g.rating ? Math.round(g.rating * 10) / 10 : null,
+      platforms,
+      genres,
+      status:    'liste'
+    });
+    saveGames();
+    document.getElementById('searchResults').innerHTML = '';
+    document.getElementById('searchResults').className = '';
+    document.getElementById('searchInput').value = '';
+    window._searchResults = [];
+    render();
+  }
+
+  // ── Status / Delete ───────────────────────────────────────────────────────
+
+  function changeStatus(id, val) {
+    const g = games.find(x => x.id === id);
+    if (g) { g.status = val; saveGames(); render(); }
+  }
+
+  function deleteGame(id) {
+    if (!confirm('Supprimer ce jeu ?')) return;
+    games = games.filter(x => x.id !== id);
+    saveGames();
+    render();
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  function render() {
+    renderStats();
+    renderFilters();
+    renderGrid();
+  }
+
+  function renderStats() {
+    const c = { total: games.length, joue: 0, complete: 0, abandonne: 0 };
+    games.forEach(g => { if (c[g.status] !== undefined) c[g.status]++; });
+    document.getElementById('statsRow').innerHTML = `
+      <div class="stat"><div class="stat-num">${c.total}</div><div class="stat-label">Total</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--gold)">${c.joue}</div><div class="stat-label">En cours</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--accent)">${c.complete}</div><div class="stat-label">Complétés</div></div>
+      <div class="stat"><div class="stat-num" style="color:var(--red)">${c.abandonne}</div><div class="stat-label">Abandonnés</div></div>
+    `;
+  }
+
+  function renderFilters() {
+    const all = ['Tous', 'Dans la liste', 'En cours / Joué', 'Complété', 'Abandonné'];
+    document.getElementById('filters').innerHTML = all.map(f =>
+      `<button class="filter-btn ${activeFilter === f ? 'active' : ''}" onclick="setFilter('${f}')">${f}</button>`
+    ).join('');
+  }
+
+  function setFilter(f) { activeFilter = f; renderFilters(); renderGrid(); }
+
+  function renderGrid() {
+    const filterMap = {
+      'Dans la liste':    'liste',
+      'En cours / Joué':  'joue',
+      'Complété':         'complete',
+      'Abandonné':        'abandonne'
+    };
+    const filtered = activeFilter === 'Tous'
+      ? games
+      : games.filter(g => g.status === filterMap[activeFilter]);
+
+    const grid = document.getElementById('gameGrid');
+
+    if (!filtered.length) {
+      grid.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">${games.length ? '🔍' : '🎮'}</div>
+          <p>${games.length ? 'Aucun jeu dans cette catégorie.' : 'Ta bibliothèque est vide.<br>Recherche un jeu pour commencer !'}</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map((g, idx) => {
+      const badgeClass = `badge-${g.status}`;
+      const meta = [g.year, (g.genres||g.platforms||[]).slice(0,2).join(', ')].filter(Boolean).join(' · ');
+      const coverHtml = g.cover
+        ? `<img style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.3s;" src="${esc(g.cover)}" loading="lazy" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''" />`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;">🎮</div>`;
+      const ratingHtml = g.rating
+        ? `<div style="position:absolute;top:6px;right:6px;background:rgba(14,14,16,0.75);backdrop-filter:blur(4px);color:var(--gold);font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px;">★ ${g.rating}</div>`
+        : '';
+      return `
+        <div class="game-card" style="animation-delay:${idx * 0.04}s">
+          <div class="game-cover" style="position:relative;overflow:hidden;">
+            ${coverHtml}
+            ${ratingHtml}
+          </div>
+          <div class="game-body">
+            <span class="status-badge ${badgeClass}">${statusLabels[g.status]}</span>
+            <div class="game-title">${esc(g.name)}</div>
+            ${meta ? `<div class="game-year">${esc(meta)}</div>` : ''}
+            <select class="status-select" onchange="changeStatus(${g.id}, this.value)">
+              ${Object.entries(statusLabels).map(([v, l]) =>
+                `<option value="${v}"${g.status === v ? ' selected' : ''}>${l}</option>`
+              ).join('')}
+            </select>
+            <div class="game-footer">
+              <button class="del-btn" onclick="deleteGame(${g.id})">Supprimer</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  init();
+</script>
+</body>
+</html>
