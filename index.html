@@ -410,13 +410,13 @@
 
   function init() {
     apiKey = localStorage.getItem(STORAGE_KEY) || '';
+    const saved = localStorage.getItem(STORAGE_GAMES);
+    if (saved) { try { games = JSON.parse(saved); } catch(e) { games = []; } }
     if (apiKey) {
       showMain();
     } else {
       document.getElementById('api-screen').style.display = 'flex';
     }
-    const saved = localStorage.getItem(STORAGE_GAMES);
-    if (saved) { try { games = JSON.parse(saved); } catch(e) { games = []; } }
   }
 
   function saveApiKey() {
